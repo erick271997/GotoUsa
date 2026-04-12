@@ -1,107 +1,107 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  Alert
+} from 'react-native';
 import { WebView } from 'react-native-webview';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function USCISScreen() {
-  const [result, setResult] = useState(null);
+export default function USCISScreen({ navigation }) {
   const [caseNumber, setCaseNumber] = useState('');
   const [showWeb, setShowWeb] = useState(false);
-  const [loading, setLoading] = useState(true); // 👈 SOLO AQUÍ
+  const webRef = useRef(null);
 
-  const handlePress = async () => {
-    if (caseNumber.trim().length > 5) {
-      try {
-        const existing = await AsyncStorage.getItem('cases');
-        const cases = existing ? JSON.parse(existing) : [];
-        cases.push(caseNumber.trim());
-        await AsyncStorage.setItem('cases', JSON.stringify(cases));
-        setShowWeb(true);
-      } catch (e) {
-        console.error(e);
-      }
+  const searchCase = () => {
+    if (!caseNumber) {
+      Alert.alert('ERROR', 'ENTER CASE NUMBER');
+      return;
     }
+
+    setShowWeb(true);
+
+    setTimeout(() => {
+      webRef.current?.injectJavaScript(`
+        document.querySelector('input[name="appReceiptNum"]').value = "${caseNumber}";
+        document.querySelector('form').submit();
+        true;
+      `);
+    }, 2000);
   };
 
-  if (showWeb) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#0A1F44' }}>
-
-        <View style={{ padding: 15, flexDirection: 'row' }}>
-          <TouchableOpacity onPress={() => setShowWeb(false)}>
-            <Text style={{ color: '#FFD700' }}>← Back</Text>
-          </TouchableOpacity>
-        </View>
-
-        {loading && (
-          <Text style={{ textAlign: 'center', color: '#fff' }}>
-            Checking your case...
-          </Text>
-        )}
-
-<WebView
-  source={{ uri: 'https://egov.uscis.gov/' }}
-  style={{ flex: 1 }}
-  onLoadEnd={() => {
-    setLoading(false);
-
-    // SIMULACIÓN TEMPORAL (luego mejoramos)
-    setResult({
-      status: "Case Was Received",
-      date: "April 2025"
-    });
-
-    setShowWeb(false);
-  }}
-/>
-      </View>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>USCIS Case Status</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1F44' }}>
 
-      <TextInput
-        placeholder="Enter your case number"
-        value={caseNumber}
-        onChangeText={setCaseNumber}
-        style={styles.input}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Text style={styles.buttonText}>Check Case</Text>
+      {/* BACK */}
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={{ padding: 10 }}
+      >
+        <Text style={{ color: '#FFD700', fontWeight: 'bold' }}>
+          ← BACK
+        </Text>
       </TouchableOpacity>
+
+      {/* INPUT UI */}
+      {!showWeb && (
+        <View style={{ padding: 20 }}>
+
+          <Text style={{
+            color: '#FFD700',
+            fontSize: 22,
+            fontWeight: 'bold',
+            textAlign: 'center'
+          }}>
+            USCIS TRACKER
+          </Text>
+
+          <TextInput
+            style={{
+              backgroundColor: '#1E3A5F',
+              color: 'white',
+              padding: 15,
+              borderRadius: 10,
+              marginTop: 20,
+              textTransform: 'uppercase'
+            }}
+            placeholder="ENTER CASE NUMBER"
+            placeholderTextColor="gray"
+            value={caseNumber}
+            onChangeText={(t) => setCaseNumber(t.toUpperCase())}
+          />
+
+          <TouchableOpacity
+            onPress={searchCase}
+            style={{
+              backgroundColor: '#FFD700',
+              padding: 15,
+              borderRadius: 10,
+              marginTop: 15
+            }}
+          >
+            <Text style={{
+              textAlign: 'center',
+              fontWeight: 'bold',
+              color: '#0A1F44'
+            }}>
+              🔍 SEARCH INSIDE APP
+            </Text>
+          </TouchableOpacity>
+
+        </View>
+      )}
+
+      {/* WEBVIEW (NO SALES DE LA APP) */}
+      {showWeb && (
+        <WebView
+          ref={webRef}
+          source={{ uri: 'https://egov.uscis.gov/casestatus/mycasestatus.do' }}
+          style={{ flex: 1 }}
+        />
+      )}
+
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A1F44',
-    padding: 20,
-  },
-  title: {
-    color: '#FFD700',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#FFD700',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#0A1F44',
-    fontWeight: 'bold',
-  },
-});

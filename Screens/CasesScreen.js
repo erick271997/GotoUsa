@@ -1,83 +1,102 @@
-import { View, Text, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  SafeAreaView,
+  TouchableOpacity,
+  Alert
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { WebView } from 'react-native-webview';
 
 export default function CasesScreen() {
   const [cases, setCases] = useState([]);
-  const [selectedCase, setSelectedCase] = useState(null);
+
+  const loadCases = async () => {
+    const data = await AsyncStorage.getItem('cases');
+    setCases(data ? JSON.parse(data) : []);
+  };
 
   useEffect(() => {
     loadCases();
   }, []);
 
-  const loadCases = async () => {
-    const data = await AsyncStorage.getItem('cases');
-    if (data) {
-      setCases(JSON.parse(data));
-    }
-  };
-
-  const deleteCase = async (caseNumber) => {
-    const updated = cases.filter(c => c !== caseNumber);
-    setCases(updated);
+  const deleteCase = async (index) => {
+    const updated = cases.filter((_, i) => i !== index);
     await AsyncStorage.setItem('cases', JSON.stringify(updated));
+    setCases(updated);
   };
 
-  // 👉 SI SELECCIONA UN CASO → WEBVIEW
-  if (selectedCase) {
-    return (
-      <View style={{ flex: 1 }}>
-        
-        <TouchableOpacity
-          style={{ backgroundColor: '#0A1F44', padding: 15 }}
-          onPress={() => setSelectedCase(null)}
-        >
-          <Text style={{ color: '#FFD700' }}>← Back</Text>
-        </TouchableOpacity>
-
-        <WebView
-          source={{ uri: 'https://egov.uscis.gov/casestatus/mycasestatus.do' }}
-          style={{ flex: 1 }}
-        />
-      </View>
-    );
-  }
+  const copyCase = (number) => {
+    Alert.alert('CASE COPIED', number);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1F44', padding: 20 }}>
 
       <Text style={{
         color: '#FFD700',
-        fontSize: 22,
-        marginBottom: 20
+        fontSize: 24,
+        textAlign: 'center',
+        fontWeight: 'bold'
       }}>
-        My Cases
+        SAVED CASES
       </Text>
 
       <FlatList
         data={cases}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={{
-            backgroundColor: '#fff',
+            backgroundColor: '#1E3A5F',
             padding: 15,
-            borderRadius: 12,
-            marginBottom: 12,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center'
+            borderRadius: 10,
+            marginTop: 10
           }}>
-            
-            {/* CLICK PARA VER */}
-            <TouchableOpacity onPress={() => setSelectedCase(item)}>
-              <Text style={{ fontWeight: 'bold' }}>{item}</Text>
-            </TouchableOpacity>
 
-            {/* BOTÓN ELIMINAR */}
-            <TouchableOpacity onPress={() => deleteCase(item)}>
-              <Text style={{ color: 'red' }}>Delete</Text>
-            </TouchableOpacity>
+            <Text style={{ color: '#FFD700', fontWeight: 'bold' }}>
+              {item.number}
+            </Text>
+
+            <Text style={{ color: 'white', marginTop: 5 }}>
+              {item.status}
+            </Text>
+
+            <Text style={{ color: 'gray', marginTop: 5 }}>
+              {item.createdAt}
+            </Text>
+
+            <View style={{ flexDirection: 'row', marginTop: 10 }}>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#2196F3',
+                  flex: 1,
+                  padding: 10,
+                  marginRight: 5
+                }}
+                onPress={() => copyCase(item.number)}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>
+                  COPY
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#FF3B30',
+                  flex: 1,
+                  padding: 10,
+                  marginLeft: 5
+                }}
+                onPress={() => deleteCase(index)}
+              >
+                <Text style={{ color: 'white', textAlign: 'center' }}>
+                  DELETE
+                </Text>
+              </TouchableOpacity>
+
+            </View>
 
           </View>
         )}
