@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   FlatList,
-  Alert
+  Alert,
+  Linking
 } from 'react-native';
 
 import * as Clipboard from 'expo-clipboard';
@@ -25,12 +26,8 @@ export default function HomeScreen({ navigation }) {
     setCases(data ? JSON.parse(data) : []);
   };
 
-  // 💾 SAVE CASE
   const saveCase = async () => {
-    if (!caseNumber) {
-      Alert.alert('ERROR', 'ENTER CASE NUMBER');
-      return;
-    }
+    if (!caseNumber) return;
 
     const newCase = {
       number: caseNumber.toUpperCase(),
@@ -46,14 +43,12 @@ export default function HomeScreen({ navigation }) {
     Alert.alert('SAVED', 'CASE ADDED');
   };
 
-  // 🗑 DELETE
   const deleteCase = async (index) => {
     const updated = cases.filter((_, i) => i !== index);
     await AsyncStorage.setItem('cases', JSON.stringify(updated));
     setCases(updated);
   };
 
-  // 📋 COPY
   const copyCase = async (number) => {
     await Clipboard.setStringAsync(number);
     Alert.alert('COPIED', number);
@@ -62,7 +57,6 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A1F44', padding: 20 }}>
 
-      {/* TITLE */}
       <Text style={{
         color: '#FFD700',
         fontSize: 26,
@@ -79,16 +73,16 @@ export default function HomeScreen({ navigation }) {
           color: 'white',
           padding: 15,
           borderRadius: 10,
-          marginTop: 20,
-          textTransform: 'uppercase'
+          marginTop: 20
         }}
         placeholder="ENTER CASE NUMBER"
         placeholderTextColor="gray"
         value={caseNumber}
-        onChangeText={(t) => setCaseNumber(t.toUpperCase())}
+        onChangeText={setCaseNumber}
+        autoCapitalize="characters"
       />
 
-      {/* SAVE CASE */}
+      {/* SAVE */}
       <TouchableOpacity
         onPress={saveCase}
         style={{
@@ -103,35 +97,36 @@ export default function HomeScreen({ navigation }) {
         </Text>
       </TouchableOpacity>
 
-      {/* OPEN USCIS */}
+      {/* OPEN USCIS SCREEN */}
       <TouchableOpacity
         onPress={() => navigation.navigate('USCIS')}
         style={{
-          backgroundColor: '#FFD700',
+          backgroundColor: '#5da5f1ff',
           padding: 15,
           borderRadius: 10,
           marginTop: 10
         }}
       >
-        <Text style={{ textAlign: 'center', fontWeight: 'bold', color: '#0A1F44' }}>
+        <Text style={{ color: '#0A1F44', textAlign: 'center', fontWeight: 'bold' }}>
           🛂 OPEN USCIS
         </Text>
       </TouchableOpacity>
 
-      {/* OPEN EOIR */}
+      {/* OPEN EOIR (abre dentro de la app) */}
       <TouchableOpacity
         onPress={() => navigation.navigate('EOIR')}
         style={{
-          backgroundColor: '#8B5CF6',
+          backgroundColor: '#f4db61ff',
           padding: 15,
           borderRadius: 10,
           marginTop: 10
         }}
       >
-        <Text style={{ textAlign: 'center', fontWeight: 'bold', color: 'white' }}>
-          ⚖️ EOIR COURT STATUS
+        <Text style={{ color: '#0A1F44', textAlign: 'center', fontWeight: 'bold' }}>
+          ⚖️ OPEN EOIR
         </Text>
       </TouchableOpacity>
+        
 
       {/* LIST */}
       <FlatList
@@ -146,7 +141,7 @@ export default function HomeScreen({ navigation }) {
             marginBottom: 10
           }}>
 
-            <Text style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 16 }}>
+            <Text style={{ color: '#FFD700', fontWeight: 'bold' }}>
               {item.number}
             </Text>
 
@@ -154,7 +149,6 @@ export default function HomeScreen({ navigation }) {
               {item.createdAt}
             </Text>
 
-            {/* BUTTONS */}
             <View style={{ flexDirection: 'row', marginTop: 10 }}>
 
               <TouchableOpacity

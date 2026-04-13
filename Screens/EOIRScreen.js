@@ -1,110 +1,105 @@
 import React, { useState } from 'react';
 import {
+  SafeAreaView,
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
-  Alert
+  ActivityIndicator
 } from 'react-native';
 
-import * as Clipboard from 'expo-clipboard';
+import { WebView } from 'react-native-webview';
 import { Linking } from 'react-native';
+export default function EOIRScreen({ route }) {
+  const alienNumberFromHome = route?.params?.alienNumber || '';
+  const [alienNumber, setAlienNumber] = useState(alienNumberFromHome);
 
-export default function EOIRScreen() {
-  const [alienNumber, setAlienNumber] = useState('');
-
-  // 🔍 OPEN EOIR
-  const openEOIR = () => {
-    if (!alienNumber) {
-      Alert.alert('ERROR', 'ENTER A-NUMBER');
-      return;
-    }
-
-    Linking.openURL('https://acis.eoir.justice.gov/en/');
-  };
-
-  // 📋 COPY A NUMBER
-  const copyA = async () => {
-    if (!alienNumber) {
-      Alert.alert('ERROR', 'ENTER A-NUMBER');
-      return;
-    }
-
-    await Clipboard.setStringAsync(alienNumber);
-    Alert.alert('COPIED', alienNumber);
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  
+const openEOIR = () => {
+  Linking.openURL('https://acis.eoir.justice.gov/en/');
+};
 
   return (
-    <SafeAreaView style={{
-      flex: 1,
-      backgroundColor: '#1E1B4B',
-      padding: 20
-    }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#1E1B4B' }}>
 
-      {/* TITLE */}
-      <Text style={{
-        color: 'white',
-        fontSize: 22,
-        textAlign: 'center',
-        fontWeight: 'bold'
-      }}>
-        EOIR COURT STATUS ⚖️
-      </Text>
-
-      {/* INPUT */}
-      <TextInput
-        style={{
-          backgroundColor: '#333',
-          color: 'white',
-          padding: 15,
-          borderRadius: 10,
-          marginTop: 20
-        }}
-        placeholder="ENTER A-NUMBER (A123456789)"
-        placeholderTextColor="gray"
-        value={alienNumber}
-        onChangeText={setAlienNumber}
-        autoCapitalize="characters"
-      />
-
-      {/* SEARCH */}
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#8B5CF6',
-          padding: 15,
-          borderRadius: 10,
-          marginTop: 20
-        }}
-        onPress={openEOIR}
-      >
+      {/* HEADER */}
+      <View style={{ padding: 20 }}>
         <Text style={{
           color: 'white',
+          fontSize: 20,
           textAlign: 'center',
           fontWeight: 'bold'
         }}>
-          🔍 SEARCH CASE
+          EOIR COURT STATUS ⚖️
         </Text>
-      </TouchableOpacity>
 
-      {/* COPY */}
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#2196F3',
-          padding: 15,
-          borderRadius: 10,
-          marginTop: 10
-        }}
-        onPress={copyA}
-      >
-        <Text style={{
-          color: 'white',
-          textAlign: 'center',
-          fontWeight: 'bold'
+
+      </View>
+
+      {/* LOADING */}
+      {loading && !error && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <Text style={{ color: 'white', marginTop: 10 }}>
+            LOADING EOIR...
+          </Text>
+        </View>
+      )}
+
+      {/* ERROR UI PERSONALIZADO */}
+      {error && (
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20
         }}>
-          📋 COPY A-NUMBER
-        </Text>
-      </TouchableOpacity>
+          
+
+          <TouchableOpacity
+            onPress={openEOIR}
+            style={{
+              backgroundColor: '#8B5CF6',
+              padding: 15,
+              borderRadius: 10,
+              marginTop: 20
+            }}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>
+              OPEN IN BROWSER
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* WEBVIEW */}
+      {!error && (
+        <WebView
+          source={{ uri: 'https://acis.eoir.justice.gov/en/' }}
+          style={{ flex: 1 }}
+
+          onLoadStart={() => {
+            setLoading(true);
+            setError(false);
+          }}
+
+          onLoadEnd={() => {
+            setLoading(false);
+          }}
+
+          onError={() => {
+            setError(true);
+            setLoading(false);
+          }}
+
+          onHttpError={() => {
+            setError(true);
+            setLoading(false);
+          }}
+        />
+      )}
 
     </SafeAreaView>
   );
