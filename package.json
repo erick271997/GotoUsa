@@ -20,6 +20,7 @@
     "expo": "~54.0.33",
     "expo-clipboard": "~8.0.8",
     "expo-linear-gradient": "~15.0.8",
+    "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "express": "^5.2.1",
     "puppeteer": "^24.40.0",
